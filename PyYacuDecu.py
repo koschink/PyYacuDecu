@@ -14,16 +14,10 @@ import numpy.ctypeslib as npct
 import matplotlib.pyplot as plt
 from skimage import data, img_as_float
 from math import ceil, floor
-
-
-
-astro = img_as_float(data.astronaut())
-
 from skimage.viewer import ImageViewer
-
 import skimage.io
 
-datapath = os.path.dirname(__file__)
+datapath = os.path.dirname(__file__) # looks for all files in the same directory as the script, change if it should look somewhere else.
 
 
 
@@ -40,14 +34,19 @@ filenames_output = ["Decon_C2.tif"]
 _yacu = CDLL('libyacudecu.dll',  mode=RTLD_GLOBAL)
 
 array_3d_float = npct.ndpointer(dtype=np.float32, ndim=3 , flags='CONTIGUOUS')
-fun=_yacu.deconv_device
 
 
-#fun.restype = None
+## Activate the correspnding CUDA moes: device is fastest, but needs loads of GPU memory, host is slow but needs only little memory, stream is a compromise
+#fun=_yacu.deconv_device
+
+#fun=_yacu.deconv_host
+
+fun=_yacu.deconv_stream
+
+
 
 fun.argtypes = [c_int, c_int,c_int,c_int, array_3d_float, array_3d_float, array_3d_float]
 
-#fun.argtypes = [c_int, c_size_t,c_size_t,c_size_t, POINTER(c_float), POINTER(c_float), POINTER(c_float)]
 
 
 print("Processing " + str(len(filenames_input)) + " files")
@@ -91,7 +90,7 @@ for number, (filename, filename_out) in enumerate(zip(filenames_input, filenames
     #print psf
     print("Shifted PSF")
     
-    result = np.copy(indata)
+    result = np.copy(indata) ## this has to be the original image for the first round
     
     print(result)
     print("Generated result array")
